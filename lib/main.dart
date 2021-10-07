@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'dart:math' as math;
+import 'package:contacts_01/dailScreen.dart';
+import 'package:get/get.dart';
 
 void main() {
   runApp(const MyApp());
@@ -59,6 +61,8 @@ class _MyHomePageState extends State<MyHomePage> {
     _pages = [
       buildContactsList(),
       buildFavoritesGridView(),
+      builddial(),
+
       // Text('hello'),
       Text(
         'Index 2: School',
@@ -201,15 +205,30 @@ class _MyHomePageState extends State<MyHomePage> {
               child: Container(),
             ),
             if (_contact.isIncoming)
-              Icon(
-                Icons.arrow_downward,
-                color: Colors.red,
-              )
+              IconButton(
+                  icon: Icon(
+                    Icons.phone_callback,
+                    color: Colors.red,
+                  ),
+                  highlightColor: Colors.red,
+                  onPressed: () {
+                    _onSearchButtonPressed();
+                  })
             else
-              Icon(
-                Icons.arrow_upward,
-                color: Colors.green,
-              )
+              IconButton(
+                icon: Icon(
+                  Icons.phone_callback,
+                  color: Colors.green,
+                ),
+                highlightColor: Colors.green,
+                onPressed: () {
+                  buildContactItem(_contact);
+                },
+              ),
+            // Icon(
+            //   Icons.phone_callback,
+            //   color: Colors.green,
+            // )
           ],
         ),
       ),
@@ -222,6 +241,20 @@ class _MyHomePageState extends State<MyHomePage> {
         return buildContactItem(contacts[index]);
       },
       itemCount: contacts.length,
+    );
+  }
+
+  Widget builddial() {
+    return Scaffold(
+      body: Center(
+          child: TextButton(
+        onPressed: () {
+          // Fails because Scaffold.of() doesn't find anything
+          // above this widget's context.
+          print(Scaffold.of(context).hasAppBar);
+        },
+        child: Text('hasAppBar'),
+      )),
     );
   }
 
@@ -249,7 +282,7 @@ class _MyHomePageState extends State<MyHomePage> {
           ),
           BottomNavigationBarItem(
               icon: Icon(Icons.access_time_outlined),
-              label: 'School',
+              label: 'Keypad',
               activeIcon: Icon(Icons.access_time_filled)),
         ],
         currentIndex: _selectedIndex,
@@ -257,5 +290,11 @@ class _MyHomePageState extends State<MyHomePage> {
         onTap: _onItemTapped,
       ),
     );
+  }
+
+  void _onSearchButtonPressed() {
+    ////print("search button clicked");
+    // buildFavoritesGridView();
+    builddial();
   }
 }
