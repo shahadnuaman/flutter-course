@@ -1,10 +1,8 @@
+import 'dart:convert';
 import 'package:contacts_01/ui/new_note_page.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-
-import 'data.dart';
-import 'models/contact.dart';
-import 'models/note.dart';
+import 'package:contacts_01/models/note.dart';
 
 void main() {
   runApp(const MyApp());
@@ -21,7 +19,7 @@ class MyApp extends StatelessWidget {
         primarySwatch: Colors.amber,
       ),
       debugShowCheckedModeBanner: false,
-      home: const MyHomePage(title: 'Saving/Restoring Counter'),
+      home: const MyHomePage(title: 'Notes App'),
     );
   }
 }
@@ -36,32 +34,15 @@ class MyHomePage extends StatefulWidget {
 }
 
 class _MyHomePageState extends State<MyHomePage> {
-  var notes = [];
+  List<NoteModel> notes = <NoteModel>[];
 
-  int counter = 0;
-
-  Future<int> getSavedCounter() async {
-    var prefs = await SharedPreferences.getInstance();
-    // prefs.set
-    // counter = prefs.getInt('counter_key') ?? 0;
-    debugPrint('counter is set...');
-    counter = prefs.getInt('counter_key') ?? 0;
-
-    return counter;
-  }
-
-  @override
-  void initState() {
-    debugPrint('initState...');
-    getSavedCounter();
-    debugPrint('getSavedCounter called...');
-
-    super.initState();
-  }
+  late SharedPreferences sharedPreferences;
 
   void removeNote(NoteModel note) {
     notes.remove(note);
+    saveData();
     setState(() {});
+    saveData();
   }
 
   Widget noteItemView(NoteModel note) {
@@ -80,14 +61,14 @@ class _MyHomePageState extends State<MyHomePage> {
                   maxLines: 1,
                   softWrap: true,
                   overflow: TextOverflow.ellipsis,
-                  style: TextStyle(fontSize: 20),
+                  style: const TextStyle(fontSize: 20),
                 ),
               ),
               Expanded(
                 child: Container(),
               ),
               IconButton(
-                icon: Icon(Icons.remove_circle_outline),
+                icon: const Icon(Icons.remove_circle_outline),
                 onPressed: () => removeNote(note),
               ),
             ],
@@ -105,72 +86,73 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 
   void insertNewNote() {
-    notes.add(NoteModel('New note ${notes.length}'));
+    notes.add(NoteModel(content: 'New note '));
     setState(() {});
+    saveData();
   }
 
   void openNewNote({NoteModel? noteModel}) {
-    NoteModel _note = noteModel ?? NoteModel('going to shop');
+    NoteModel _note = noteModel ??
+        NoteModel(
+          content: 'New Note',
+          checked: false,
+        );
     Navigator.push(
       context,
       MaterialPageRoute(builder: (context) => NewNotePage(_note)),
     ).then((value) {
       if (noteModel == null) {
         notes.add(_note);
+        saveData();
       }
+      saveData();
+
       setState(() {});
     });
   }
 
-  _incrementCounter() async {
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    // counter = (prefs.getInt('counter_key') ?? 0) + 1;
-    debugPrint('Pressed $counter times.');
-    counter += 1;
-    await prefs.setInt('counter_key', counter);
-    debugPrint('counter: $counter');
+  @override
+  void initState() {
+    initSharedPreferences();
+    super.initState();
+  }
 
-    setState(() {});
+  initSharedPreferences() async {
+    sharedPreferences = await SharedPreferences.getInstance();
+    loadData();
+
+    /// print('hello');
   }
 
   @override
   Widget build(BuildContext context) {
-    debugPrint('build...');
-
-    var futureWidget = FutureBuilder<int>(
-      future: getSavedCounter(), // async work
-      builder: (BuildContext context, AsyncSnapshot<int> snapshot) {
-        debugPrint('snapshot: ${snapshot.connectionState}');
-
-        switch (snapshot.connectionState) {
-          case ConnectionState.waiting:
-            return Container(
-              width: 100,
-              height: 100,
-              color: Colors.red,
-            );
-          default:
-            if (snapshot.hasError) {
-              return Text('Error: ${snapshot.error}');
-            } else {
-              return Text(
-                'Counter: ${snapshot.data}',
-                style: TextStyle(fontSize: 40),
-              );
-            }
-        }
-      },
-    );
-
     return Scaffold(
       appBar: AppBar(
         title: Text(widget.title),
       ),
-      body: Center(child: futureWidget),
+      body: buildNotesList(),
       floatingActionButton: FloatingActionButton(
-        onPressed: _incrementCounter,
+        onPressed: openNewNote,
         child: const Icon(Icons.add),
       ),
     );
+  }
+
+  void loadData() {
+    List<String>? listString = sharedPreferences.getStringList('list');
+    if (listString != null) {
+      notes = listString
+          .map((item) => NoteModel.fromMap(json.decode(item)))
+          .toList();
+
+      setState(() {});
+    }
+  }
+
+  void saveData() {
+    List<String> stringList =
+        notes.map((item) => json.encode(item.toMap())).toList();
+    sharedPreferences.setStringList('list', stringList);
+    //print(stringList);
   }
 }
