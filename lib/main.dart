@@ -6,7 +6,6 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import 'models/Weather.dart';
 import 'models/api.dart';
-import 'models/current.dart';
 
 void main() {
   runApp(const MyApp());
